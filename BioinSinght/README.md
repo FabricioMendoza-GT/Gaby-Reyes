@@ -1,70 +1,133 @@
-# BioInsight
+# BioinSight
 
-Aplicación móvil de seguimiento de resultados clínicos creada con Expo y React Native.
+BioinSight es una aplicación móvil creada con Expo y React Native para visualizar y seguir resultados clínicos de forma clara. La app está pensada como un panel de salud con navegación por autenticación, onboarding y pestañas principales.
 
-## Cambios principales
+## Lo importante del proyecto
 
-El proyecto fue migrado desde una aplicación concentrada en `App.tsx` a una estructura modular basada en React Navigation.
+- Flujo de acceso con onboarding, login y entrada al área principal.
+- Dashboard con estado general, acciones rápidas y últimos resultados.
+- Historial clínico con búsqueda, filtros por categoría y badges por estado.
+- Alertas de salud con prioridad visual diferenciada.
+- Evolución de glucosa con resumen, gráfico simple y métricas clave.
+- Perfil de usuario con intereses de salud guardados en contexto.
+- Componentes reutilizables, tema y estilos organizados dentro de `src`.
 
-- Se separó cada vista en su propia pantalla dentro de `src/screens`.
-- Se incorporó un flujo de navegación para autenticación y onboarding.
-- Se creó una navegación por pestañas para el área principal de la aplicación.
-- Se organizaron componentes reutilizables, datos, estilos, tipos y tema dentro de `src`.
+## Stack
 
-## Navegación implementada
+- Expo SDK 54
+- React Native 0.81
+- React 19
+- TypeScript
+- React Navigation v7
+- React Native Gesture Handler
+- React Native Reanimated
+- React Native Safe Area Context
 
-La aplicación tiene dos niveles de navegación:
+## Flujo de navegación
 
-1. **Stack de acceso**
-   - Onboarding: selección de intereses de salud.
-   - Login: acceso simulado a la aplicación.
-   - Main: entrada al área principal después de iniciar sesión.
+La app se divide en dos capas:
 
-2. **Pestañas principales**
-   - Inicio: resumen del estado general y resultados recientes.
-   - Historial: búsqueda y filtro de resultados clínicos.
-   - Alertas: historial de alertas de salud.
-   - Evolución: resumen visual de la evolución de glucosa.
-   - Perfil: información de usuario y acciones de configuración.
+### Acceso
 
-## Mejoras visuales
+- `Onboarding`: permite elegir intereses de salud como diabetes, salud cardiovascular, función renal y salud general.
+- `Login`: pantalla de inicio de sesión simulada.
+- `Main`: contenedor de la navegación principal después de entrar.
 
-- En **Historial**, los estados de resultado se muestran con badges de color:
-  - Atención: rojo claro.
-  - Precaución: amarillo claro.
-  - Normal: verde claro.
-- En **Alertas**, solo el indicador circular cambia de color según la prioridad:
-  - Crítica: rojo.
-  - Precaución: amarillo.
-  - Informativa: azul.
-- Se mantiene una barra inferior personalizada para las secciones principales.
+### Pestañas principales
 
-## Estructura relevante
+- `Dashboard`: resumen general, accesos rápidos y resultados recientes.
+- `History`: historial clínico con buscador y filtros.
+- `Alerts`: lista de alertas y su nivel de prioridad.
+- `Evolution`: evolución visual de glucosa en ayunas.
+- `Profile`: datos de usuario, intereses seleccionados y cierre de sesión.
+
+La barra inferior personalizada incluye un botón central de acción rápida que abre el onboarding para modificar preferencias.
+
+## Arquitectura
+
+El proyecto dejó de depender de una sola pantalla en `App.tsx` y se organizó por responsabilidades dentro de `src`.
 
 ```text
 src/
-├── components/       # Componentes reutilizables
-├── data/             # Datos de ejemplo
-├── navigation/       # Stack, tabs y tipos de navegación
-├── screens/          # Pantallas de autenticación y área principal
-├── styles/           # Estilos por pantalla
-├── theme/            # Colores, espaciado y radios
-└── types/            # Tipos de TypeScript
+├── components/       Componentes reutilizables de UI
+│   ├── common/
+│   ├── dashboard/
+│   └── navigation/
+├── constants/        Rutas y constantes compartidas
+├── context/          Estado global de preferencias
+├── data/             Datos de ejemplo
+├── navigation/       Stack, tabs y tipos de navegación
+├── screens/          Pantallas de auth y home
+│   ├── Auth/
+│   │   ├── LoginScreen.tsx
+│   │   └── OnboardingScreen.tsx
+│   └── Home/
+│       ├── AlertsScreen.tsx
+│       ├── DashboardScreen.tsx
+│       ├── EvolutionScreen.tsx
+│       ├── HistoryScreen.tsx
+│       └── ProfileScreen.tsx
+├── styles/           Estilos específicos de pantallas
+├── theme/            Colores, radios y espaciado
+└── types/            Tipos de dominio
 ```
 
-## Ejecutar el proyecto
+## Datos y comportamiento actual
+
+- Los resultados clínicos y alertas vienen de datos de ejemplo locales.
+- El login no valida contra un backend real todavía.
+- Las preferencias de intereses se guardan en estado de React Context.
+- El botón de cerrar sesión vuelve a la pantalla de login.
+- El botón de registrar del dashboard lleva al onboarding.
+
+## Pantallas destacadas
+
+### Dashboard
+
+Muestra el nombre de la paciente, el estado general, acciones rápidas y una lista de resultados recientes.
+
+### Historial
+
+Incluye búsqueda por texto y filtros por categoría para localizar exámenes con rapidez.
+
+### Alertas
+
+Resume eventos relevantes con una alerta destacada y un historial de notificaciones.
+
+### Evolución
+
+Presenta una visualización sencilla de la glucosa en ayunas, junto con promedio, mínimo y máximo.
+
+### Perfil
+
+Muestra la información del usuario, sus intereses activos y accesos de configuración.
+
+## Scripts
 
 ```bash
 npm install
-npx expo start
+npm start
+npm run android
+npm run ios
+npm run web
 ```
 
-Si Expo Go no logra cargar la aplicación desde la red local, inicia Expo mediante túnel:
+Si Expo Go no carga por red local, puedes iniciar el proyecto con túnel:
 
 ```bash
 npx expo start --tunnel --clear
 ```
 
+## Cómo correrlo
+
+1. Instala dependencias con `npm install`.
+2. Arranca Expo con `npm start`.
+3. Abre la app en Expo Go, Android Emulator, iOS Simulator o navegador.
+
+## Assets
+
+- El logo principal usado en el login está en `assets/BioinSight.png`.
+
 ## Estado actual
 
-Las pantallas y la navegación están implementadas con datos de ejemplo. Aún no hay autenticación real, persistencia de datos ni conexión con un backend.
+El proyecto ya tiene navegación, pantallas y estilos base listos. Lo que falta para producción es integrar autenticación real, persistencia y conexión con backend.
