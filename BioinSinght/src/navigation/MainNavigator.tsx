@@ -17,7 +17,7 @@ function AppTabBar({ state, navigation }: BottomTabBarProps) {
     <BottomTab
       active={active}
       onNavigate={(route) => navigation.navigate(route)}
-      onAdd={() => navigation.getParent()?.navigate('Onboarding')}
+      onAdd={() => navigation.getParent()?.navigate('NewTest')}
     />
   );
 }

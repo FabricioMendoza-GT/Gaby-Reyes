@@ -1,5 +1,7 @@
 import { Column, CreateDateColumn, Entity, Index, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
 
+import type { HealthInterest } from '../types/user';
+
 @Entity({ name: 'users' })
 export class UserEntity {
   @PrimaryGeneratedColumn('uuid')
@@ -17,6 +19,12 @@ export class UserEntity {
 
   @Column({ select: false })
   password!: string;
+
+  @Column('text', { name: 'health_interests', array: true, default: () => 'ARRAY[]::text[]' })
+  healthInterests!: HealthInterest[];
+
+  @Column({ name: 'notifications_enabled', default: true })
+  notificationsEnabled!: boolean;
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt!: Date;

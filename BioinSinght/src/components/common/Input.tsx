@@ -3,7 +3,8 @@ import {
     StyleSheet,
     Text,
     TextInput,
-    View
+    View,
+    type TextInputProps,
 } from 'react-native';
 
 interface Props{
@@ -18,6 +19,12 @@ interface Props{
 
     onChangeText:(text:string)=>void;
 
+    autoCapitalize?: TextInputProps['autoCapitalize'];
+
+    keyboardType?: TextInputProps['keyboardType'];
+
+    textContentType?: TextInputProps['textContentType'];
+
 }
 
 export default function Input({
@@ -30,7 +37,13 @@ export default function Input({
 
     secureTextEntry,
 
-    onChangeText
+    onChangeText,
+
+    autoCapitalize,
+
+    keyboardType,
+
+    textContentType,
 
 }:Props){
 
@@ -53,6 +66,12 @@ export default function Input({
                 placeholderTextColor="#B8C0CF"
 
                 secureTextEntry={secureTextEntry}
+
+                autoCapitalize={autoCapitalize}
+
+                keyboardType={keyboardType}
+
+                textContentType={textContentType}
 
                 onChangeText={onChangeText}
 

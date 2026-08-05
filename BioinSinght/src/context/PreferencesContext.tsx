@@ -1,15 +1,27 @@
-import { createContext, type ReactNode, useContext, useMemo, useState } from 'react';
+import { createContext, type ReactNode, useContext, useMemo } from 'react';
+
+import type { HealthInterest } from '../types/auth';
+import { useAuth } from './AuthContext';
 
 type PreferencesContextValue = {
-  selectedInterests: string[];
-  setSelectedInterests: (interests: string[]) => void;
+  selectedInterests: HealthInterest[];
+  notificationsEnabled: boolean;
+  savePreferences: (interests: HealthInterest[], notificationsEnabled?: boolean) => Promise<void>;
 };
 
 const PreferencesContext = createContext<PreferencesContextValue | undefined>(undefined);
 
 export function PreferencesProvider({ children }: { children: ReactNode }) {
-  const [selectedInterests, setSelectedInterests] = useState<string[]>(['diabetes', 'cardio']);
-  const value = useMemo(() => ({ selectedInterests, setSelectedInterests }), [selectedInterests]);
+  const { user, updatePreferences } = useAuth();
+  const selectedInterests = user?.healthInterests ?? [];
+  const notificationsEnabled = user?.notificationsEnabled ?? true;
+  const value = useMemo(() => ({
+    selectedInterests,
+    notificationsEnabled,
+    savePreferences: (interests: HealthInterest[], enabled = notificationsEnabled) => (
+      updatePreferences(interests, enabled)
+    ),
+  }), [selectedInterests, notificationsEnabled, updatePreferences]);
 
   return <PreferencesContext.Provider value={value}>{children}</PreferencesContext.Provider>;
 }

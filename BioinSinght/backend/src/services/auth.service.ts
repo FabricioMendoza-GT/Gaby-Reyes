@@ -5,16 +5,7 @@ import { env } from '../config/env';
 import { ApiError } from '../utils/ApiError';
 import { UserRepository } from '../repositories/user.repository';
 import type { UserEntity } from '../entities/user.entity';
-
-type AppUser = {
-  id: string;
-  firstName: string;
-  lastName: string;
-  email: string;
-  password: string;
-};
-
-type AuthUser = Pick<AppUser, 'id' | 'firstName' | 'lastName' | 'email'>;
+import type { AuthUser } from '../types/user';
 
 type RegisterInput = {
   firstName: string;
@@ -28,24 +19,36 @@ type LoginInput = {
   password: string;
 };
 
-function toAuthUser(user: UserEntity): AuthUser {
+export function toAuthUser(user: UserEntity): AuthUser {
   return {
     id: user.id,
     firstName: user.firstName,
     lastName: user.lastName,
     email: user.email,
+    healthInterests: user.healthInterests ?? [],
+    notificationsEnabled: user.notificationsEnabled ?? true,
   };
 }
 
 function createToken(user: AuthUser) {
-  return jwt.sign(user, env.jwtSecret, {
+  return jwt.sign(
+    {
+      id: user.id,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      email: user.email,
+    },
+    env.jwtSecret,
+    {
     expiresIn: env.jwtExpiresIn as jwt.SignOptions['expiresIn'],
-  });
+    },
+  );
 }
 
 export class AuthService {
   static async register(input: RegisterInput) {
-    const existingUser = await UserRepository.findByEmail(input.email);
+    const normalizedEmail = input.email.toLowerCase();
+    const existingUser = await UserRepository.findByEmail(normalizedEmail);
 
     if (existingUser) {
       throw new ApiError(409, 'El correo ya está registrado.');
@@ -54,7 +57,9 @@ export class AuthService {
     const hashedPassword = await bcrypt.hash(input.password, 10);
     const user = await UserRepository.create({
       ...input,
-      email: input.email.toLowerCase(),
+      firstName: input.firstName.trim(),
+      lastName: input.lastName.trim(),
+      email: normalizedEmail,
       password: hashedPassword,
     });
 

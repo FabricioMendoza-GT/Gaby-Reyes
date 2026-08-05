@@ -5,7 +5,7 @@ import { AppDataSource } from './config/data-source';
 async function bootstrap() {
   await AppDataSource.initialize();
 
-  app.listen(env.port, () => {
+  app.listen(env.port,  '0.0.0.0', () => {
     // eslint-disable-next-line no-console
     console.log(`BioinSight backend running on port ${env.port}`);
   });

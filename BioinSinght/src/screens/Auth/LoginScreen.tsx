@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Pressable, ScrollView, StatusBar, StyleSheet, Text, View, Image } from 'react-native';
+import { Image, Pressable, ScrollView, StatusBar, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 
@@ -7,12 +7,36 @@ import Button from '../../components/common/Button';
 import Card from '../../components/common/Card';
 import Input from '../../components/common/Input';
 import type { AuthStackParamList } from '../../navigation/types';
+import { useAuth } from '../../context/AuthContext';
+import { ApiClientError } from '../../services/api';
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'Login'>;
 
 export default function LoginScreen({ navigation }: Props) {
+  const { login } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState('');
+  const formIsValid = email.trim().length > 0 && password.length > 0;
+
+  const submit = async () => {
+    setError('');
+
+    if (!email.trim() || !password) {
+      setError('Completa el correo y la contraseña.');
+      return;
+    }
+
+    try {
+      setSubmitting(true);
+      await login({ email: email.trim(), password });
+    } catch (requestError) {
+      setError(requestError instanceof ApiClientError ? requestError.message : 'No se pudo iniciar sesión.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -48,6 +72,9 @@ export default function LoginScreen({ navigation }: Props) {
             value={email}
             placeholder="correo@ejemplo.com"
             onChangeText={setEmail}
+            autoCapitalize="none"
+            keyboardType="email-address"
+            textContentType="emailAddress"
           />
 
           <Input
@@ -56,21 +83,29 @@ export default function LoginScreen({ navigation }: Props) {
             placeholder="••••••••"
             secureTextEntry
             onChangeText={setPassword}
+            autoCapitalize="none"
+            textContentType="password"
           />
 
-          <Pressable>
-            <Text style={styles.forgot}>¿Olvidaste tu contraseña?</Text>
-          </Pressable>
+          {!!error && <Text style={styles.error}>{error}</Text>}
 
           <Button
-            title="Iniciar sesión"
-            onPress={() => navigation.replace('Main')}
+            title={submitting ? 'Iniciando sesión...' : 'Iniciar sesión'}
+            disabled={!formIsValid || submitting}
+            onPress={() => void submit()}
           />
         </Card>
 
-        <Text style={styles.signup}>
-          ¿No tienes cuenta? <Text style={styles.link}>Regístrate</Text>
-        </Text>
+        <View style={styles.signupRow}>
+          <Text style={styles.signupText}>¿No tienes cuenta?</Text>
+          <Pressable
+            accessibilityRole="button"
+            hitSlop={10}
+            onPress={() => navigation.navigate('Register')}
+          >
+            <Text style={styles.link}>Regístrate</Text>
+          </Pressable>
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -121,14 +156,15 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#9AA5B8',
   },
-  forgot: {
-    marginVertical: 15,
-    color: '#2F6CF0',
-    fontWeight: '700',
-  },
-  signup: {
+  error: { marginBottom: 14, color: '#D14343', fontWeight: '700' },
+  signupRow: {
     marginTop: 20,
-    textAlign: 'center',
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 5,
+  },
+  signupText: {
     color: '#888',
   },
   link: {

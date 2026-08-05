@@ -28,7 +28,17 @@
       "favicon": "./assets/BioinSight.png"
     },
     "plugins": [
-      "expo-font"
+      "expo-font",
+      "expo-secure-store",
+      "expo-document-picker",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "BioInsight necesita acceder a tus imágenes para adjuntar resultados de laboratorio.",
+          "cameraPermission": "BioInsight necesita usar la cámara para fotografiar resultados de laboratorio.",
+          "microphonePermission": false
+        }
+      ]
     ],
     "extra": {
       "eas": {

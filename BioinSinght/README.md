@@ -1,133 +1,142 @@
 # BioinSight
 
-BioinSight es una aplicación móvil creada con Expo y React Native para visualizar y seguir resultados clínicos de forma clara. La app está pensada como un panel de salud con navegación por autenticación, onboarding y pestañas principales.
+Aplicación móvil Expo/React Native con backend Express y PostgreSQL para visualizar y dar seguimiento a resultados clínicos.
 
-## Lo importante del proyecto
+## Funciones conectadas a PostgreSQL
 
-- Flujo de acceso con onboarding, login y entrada al área principal.
-- Dashboard con estado general, acciones rápidas y últimos resultados.
-- Historial clínico con búsqueda, filtros por categoría y badges por estado.
-- Alertas de salud con prioridad visual diferenciada.
-- Evolución de glucosa con resumen, gráfico simple y métricas clave.
-- Perfil de usuario con intereses de salud guardados en contexto.
-- Componentes reutilizables, tema y estilos organizados dentro de `src`.
+- Registro e inicio de sesión reales con JWT y contraseñas cifradas con bcrypt.
+- Sesión persistente y cifrada en Android/iOS mediante Expo SecureStore.
+- Perfil con nombre, apellido y correo editables.
+- Cambio de contraseña validando la contraseña actual.
+- Preferencias de salud persistentes por usuario.
+- Activación y desactivación de notificaciones persistente.
+- Cierre de sesión real.
+- Migraciones TypeORM y prueba integral contra PostgreSQL.
 
-## Stack
+Los resultados clínicos, alertas y evolución continúan usando los datos de demostración de `src/data`.
+
+## Tecnologías
+
+### Aplicación
 
 - Expo SDK 54
 - React Native 0.81
 - React 19
 - TypeScript
-- React Navigation v7
-- React Native Gesture Handler
-- React Native Reanimated
-- React Native Safe Area Context
+- React Navigation 7
+- Expo SecureStore
 
-## Flujo de navegación
+### Backend
 
-La app se divide en dos capas:
+- Node.js y Express 5
+- TypeScript
+- PostgreSQL
+- TypeORM
+- JWT y bcrypt
+- express-validator
 
-### Acceso
+## Configuración del backend
 
-- `Onboarding`: permite elegir intereses de salud como diabetes, salud cardiovascular, función renal y salud general.
-- `Login`: pantalla de inicio de sesión simulada.
-- `Main`: contenedor de la navegación principal después de entrar.
+El archivo `backend/.env` debe contener:
 
-### Pestañas principales
-
-- `Dashboard`: resumen general, accesos rápidos y resultados recientes.
-- `History`: historial clínico con buscador y filtros.
-- `Alerts`: lista de alertas y su nivel de prioridad.
-- `Evolution`: evolución visual de glucosa en ayunas.
-- `Profile`: datos de usuario, intereses seleccionados y cierre de sesión.
-
-La barra inferior personalizada incluye un botón central de acción rápida que abre el onboarding para modificar preferencias.
-
-## Arquitectura
-
-El proyecto dejó de depender de una sola pantalla en `App.tsx` y se organizó por responsabilidades dentro de `src`.
-
-```text
-src/
-├── components/       Componentes reutilizables de UI
-│   ├── common/
-│   ├── dashboard/
-│   └── navigation/
-├── constants/        Rutas y constantes compartidas
-├── context/          Estado global de preferencias
-├── data/             Datos de ejemplo
-├── navigation/       Stack, tabs y tipos de navegación
-├── screens/          Pantallas de auth y home
-│   ├── Auth/
-│   │   ├── LoginScreen.tsx
-│   │   └── OnboardingScreen.tsx
-│   └── Home/
-│       ├── AlertsScreen.tsx
-│       ├── DashboardScreen.tsx
-│       ├── EvolutionScreen.tsx
-│       ├── HistoryScreen.tsx
-│       └── ProfileScreen.tsx
-├── styles/           Estilos específicos de pantallas
-├── theme/            Colores, radios y espaciado
-└── types/            Tipos de dominio
+```env
+PORT=4000
+DATABASE_URL="postgresql://usuario:contrasena@host/base?sslmode=require"
+JWT_SECRET="un-secreto-largo-y-aleatorio"
+JWT_EXPIRES_IN="7d"
 ```
 
-## Datos y comportamiento actual
+Instala, migra e inicia el backend:
 
-- Los resultados clínicos y alertas vienen de datos de ejemplo locales.
-- El login no valida contra un backend real todavía.
-- Las preferencias de intereses se guardan en estado de React Context.
-- El botón de cerrar sesión vuelve a la pantalla de login.
-- El botón de registrar del dashboard lleva al onboarding.
+```bash
+cd backend
+npm install
+npm run migration:run
+npm run dev
+```
 
-## Pantallas destacadas
+La API queda disponible en `http://localhost:4000/api` y su estado se consulta en `GET /api/health`.
 
-### Dashboard
+## Configuración de la aplicación
 
-Muestra el nombre de la paciente, el estado general, acciones rápidas y una lista de resultados recientes.
-
-### Historial
-
-Incluye búsqueda por texto y filtros por categoría para localizar exámenes con rapidez.
-
-### Alertas
-
-Resume eventos relevantes con una alerta destacada y un historial de notificaciones.
-
-### Evolución
-
-Presenta una visualización sencilla de la glucosa en ayunas, junto con promedio, mínimo y máximo.
-
-### Perfil
-
-Muestra la información del usuario, sus intereses activos y accesos de configuración.
-
-## Scripts
+Instala e inicia Expo:
 
 ```bash
 npm install
 npm start
-npm run android
-npm run ios
-npm run web
 ```
 
-Si Expo Go no carga por red local, puedes iniciar el proyecto con túnel:
+La aplicación usa estas URL predeterminadas:
+
+- Android Emulator: `http://10.0.2.2:4000/api`
+- Expo Web y simulador iOS: `http://localhost:4000/api`
+
+Para probar desde Expo Go en un teléfono físico, copia `.env.example` a `.env` y reemplaza la URL con la IP local de la computadora:
+
+```env
+EXPO_PUBLIC_API_URL=http://192.168.1.50:4000/api
+```
+
+El teléfono y la computadora deben estar conectados a la misma red.
+
+## Prueba real de persistencia
+
+Con la base configurada y migrada:
 
 ```bash
-npx expo start --tunnel --clear
+cd backend
+npm run test:e2e
 ```
 
-## Cómo correrlo
+La prueba usa la API real y PostgreSQL para verificar registro, login, edición de perfil, preferencias, notificaciones y cambio de contraseña. El usuario temporal se elimina al finalizar. Para conservarlo y revisarlo en la base:
 
-1. Instala dependencias con `npm install`.
-2. Arranca Expo con `npm start`.
-3. Abre la app en Expo Go, Android Emulator, iOS Simulator o navegador.
+```bash
+KEEP_TEST_USER=true npm run test:e2e
+```
 
-## Assets
+## Endpoints implementados
 
-- El logo principal usado en el login está en `assets/BioinSight.png`.
+| Método | Ruta | Función |
+| --- | --- | --- |
+| POST | `/api/auth/register` | Registrar usuario |
+| POST | `/api/auth/login` | Iniciar sesión |
+| GET | `/api/auth/me` | Recuperar sesión |
+| GET | `/api/profile` | Consultar perfil |
+| PATCH | `/api/profile` | Actualizar nombre, apellido o correo |
+| PUT | `/api/profile/preferences` | Guardar intereses y notificaciones |
+| PUT | `/api/profile/password` | Cambiar contraseña |
 
-## Estado actual
+Las rutas de perfil requieren `Authorization: Bearer <token>`.
 
-El proyecto ya tiene navegación, pantallas y estilos base listos. Lo que falta para producción es integrar autenticación real, persistencia y conexión con backend.
+## Verificación técnica
+
+```bash
+npx tsc --noEmit
+EXPO_NO_TELEMETRY=1 npx expo-doctor
+
+cd backend
+npm run build
+```
+
+## Estructura principal
+
+```text
+src/
+├── components/
+├── context/       AuthContext y PreferencesContext
+├── navigation/
+├── screens/
+├── services/      Cliente API y almacenamiento de sesión
+└── types/
+
+backend/src/
+├── config/
+├── controllers/
+├── entities/
+├── migrations/
+├── repositories/
+├── routes/
+├── scripts/
+├── services/
+└── validations/
+```

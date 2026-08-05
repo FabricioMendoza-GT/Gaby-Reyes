@@ -1,4 +1,4 @@
-export type ResultTone = 'danger' | 'warning' | 'success';
+export type ResultTone = 'danger' | 'warning' | 'success' | 'neutral';
 
 export interface ResultItem {
   id: string;

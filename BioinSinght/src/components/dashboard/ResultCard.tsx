@@ -54,6 +54,18 @@ badge:'#ECFBF4',
 
 text:'#2CAF72'
 
+},
+
+neutral:{
+
+background:'#EEF2F7',
+
+icon:'#7F8DA5',
+
+badge:'#EEF2F7',
+
+text:'#65758C'
+
 }
 
 };
