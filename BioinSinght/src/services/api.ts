@@ -1,5 +1,4 @@
 import Constants from 'expo-constants';
-import { Platform } from 'react-native';
 
 type ApiSuccess<T> = {
   success: true;
@@ -14,18 +13,11 @@ type ApiFailure = {
 };
 
 const configuredApiUrl = process.env.EXPO_PUBLIC_API_URL?.trim();
-const expoHost = Constants.expoConfig?.hostUri?.split(':')[0];
-
-const fallbackApiUrl = Platform.OS === 'android'
-  ? 'http://10.0.2.2:4000/api'
-  : 'http://localhost:4000/api';
-
-const detectedApiUrl = expoHost
-  ? `http://${expoHost}:4000/api`
-  : fallbackApiUrl;
+const configuredAppUrl = (Constants.expoConfig?.extra as { apiUrl?: string } | undefined)?.apiUrl?.trim();
+const renderApiUrl = 'https://backend-bioinsight.onrender.com/api';
 
 export const API_URL = (
-  configuredApiUrl || detectedApiUrl
+  configuredApiUrl || configuredAppUrl || renderApiUrl
 ).replace(/\/+$/, '');
 
 console.log('BioinSight API_URL:', API_URL);
@@ -58,7 +50,7 @@ export async function apiRequest<T>(
         ...options.headers,
       },
     });
-    } catch (error) {
+  } catch (error) {
     const detail = error instanceof Error
       ? error.message
       : String(error);

@@ -1,6 +1,6 @@
 # BioinSight
 
-Aplicación móvil Expo/React Native con backend Express y PostgreSQL para visualizar y dar seguimiento a resultados clínicos.
+Aplicación móvil Expo/React Native que consume un backend Express y PostgreSQL desplegado en Render para visualizar y dar seguimiento a resultados clínicos.
 
 ## Funciones conectadas a PostgreSQL
 
@@ -26,18 +26,11 @@ Los resultados clínicos, alertas y evolución continúan usando los datos de de
 - React Navigation 7
 - Expo SecureStore
 
-### Backend
+## Backend remoto
 
-- Node.js y Express 5
-- TypeScript
-- PostgreSQL
-- TypeORM
-- JWT y bcrypt
-- express-validator
+El backend ya no se usa de forma local en este repo. Vive en un repositorio separado y se consume desde Render en `https://backend-bioinsight.onrender.com/api`.
 
-## Configuración del backend
-
-El archivo `backend/.env` debe contener:
+Para que funcione correctamente, el backend desplegado debe tener:
 
 ```env
 PORT=4000
@@ -46,16 +39,7 @@ JWT_SECRET="un-secreto-largo-y-aleatorio"
 JWT_EXPIRES_IN="7d"
 ```
 
-Instala, migra e inicia el backend:
-
-```bash
-cd backend
-npm install
-npm run migration:run
-npm run dev
-```
-
-La API queda disponible en `http://localhost:4000/api` y su estado se consulta en `GET /api/health`.
+En Render, el servicio debe arrancar con `npm start` y exponer la API bajo `/api`. Si cambias la versión del backend en su repo, redepliega ese servicio y verifica que `GET /api/health` responda correctamente.
 
 ## Configuración de la aplicación
 
@@ -66,32 +50,10 @@ npm install
 npm start
 ```
 
-La aplicación usa estas URL predeterminadas:
-
-- Android Emulator: `http://10.0.2.2:4000/api`
-- Expo Web y simulador iOS: `http://localhost:4000/api`
-
-Para probar desde Expo Go en un teléfono físico, copia `.env.example` a `.env` y reemplaza la URL con la IP local de la computadora:
+La aplicación usa por defecto la URL de Render. Si necesitas apuntar a otro backend, crea un archivo `.env` con:
 
 ```env
-EXPO_PUBLIC_API_URL=http://192.168.1.50:4000/api
-```
-
-El teléfono y la computadora deben estar conectados a la misma red.
-
-## Prueba real de persistencia
-
-Con la base configurada y migrada:
-
-```bash
-cd backend
-npm run test:e2e
-```
-
-La prueba usa la API real y PostgreSQL para verificar registro, login, edición de perfil, preferencias, notificaciones y cambio de contraseña. El usuario temporal se elimina al finalizar. Para conservarlo y revisarlo en la base:
-
-```bash
-KEEP_TEST_USER=true npm run test:e2e
+EXPO_PUBLIC_API_URL=https://backend-bioinsight.onrender.com/api
 ```
 
 ## Endpoints implementados
@@ -113,9 +75,6 @@ Las rutas de perfil requieren `Authorization: Bearer <token>`.
 ```bash
 npx tsc --noEmit
 EXPO_NO_TELEMETRY=1 npx expo-doctor
-
-cd backend
-npm run build
 ```
 
 ## Estructura principal
@@ -128,15 +87,4 @@ src/
 ├── screens/
 ├── services/      Cliente API y almacenamiento de sesión
 └── types/
-
-backend/src/
-├── config/
-├── controllers/
-├── entities/
-├── migrations/
-├── repositories/
-├── routes/
-├── scripts/
-├── services/
-└── validations/
 ```

@@ -30,7 +30,7 @@ export function ClinicalTestsProvider({ children }: { children: ReactNode }) {
   const [tests, setTests] = useState<ClinicalTest[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const interestsKey = user?.healthInterests.join(',') ?? '';
+  const interestsKey = user?.healthInterests?.join(',') ?? '';
 
   const refresh = useCallback(async () => {
     if (!user) {

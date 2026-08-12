@@ -4,11 +4,11 @@
     "slug": "bioinsight",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/BioinSight.png",
+    "icon": "./assets/BioinSight.jpeg",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "splash": {
-      "image": "./assets/BioinSight.png",
+      "image": "./assets/BioinSight.jpeg",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
@@ -17,7 +17,7 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/BioinSight.png",
+        "foregroundImage": "./assets/BioinSight.jpeg",
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
@@ -25,7 +25,7 @@
       "package": "com.mendocita.bioinsight"
     },
     "web": {
-      "favicon": "./assets/BioinSight.png"
+      "favicon": "./assets/BioinSight.jpeg"
     },
     "plugins": [
       "expo-font",
@@ -41,6 +41,7 @@
       ]
     ],
     "extra": {
+      "apiUrl": "https://backend-bioinsight.onrender.com/api",
       "eas": {
         "projectId": "26a765d7-873f-4675-90cd-d55cd3ce0e8f"
       }

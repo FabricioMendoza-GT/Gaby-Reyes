@@ -29,6 +29,17 @@ type AuthContextValue = {
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
+function normalizeAuthUser(user: AuthUser | undefined | null): AuthUser {
+  return {
+    id: user?.id ?? '',
+    firstName: user?.firstName ?? '',
+    lastName: user?.lastName ?? '',
+    email: user?.email ?? '',
+    healthInterests: user?.healthInterests ?? [],
+    notificationsEnabled: user?.notificationsEnabled ?? true,
+  };
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [token, setToken] = useState<string | null>(null);
@@ -43,7 +54,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         const storedUser = await apiRequest<AuthUser>('/auth/me', {}, storedToken);
         setToken(storedToken);
-        setUser(storedUser);
+        setUser(normalizeAuthUser(storedUser));
       } catch {
         await removeStoredToken();
       } finally {
@@ -55,7 +66,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const applySession = useCallback(async (result: AuthResult) => {
     await storeToken(result.token);
     setToken(result.token);
-    setUser(result.user);
+    setUser(normalizeAuthUser(result.user));
   }, []);
 
   const login = useCallback(async (input: LoginInput) => {
@@ -85,7 +96,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       method: 'PATCH',
       body: JSON.stringify(input),
     }, token);
-    setUser(updatedUser);
+    setUser(normalizeAuthUser(updatedUser));
   }, [token]);
 
   const updatePreferences = useCallback(async (
@@ -96,7 +107,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       method: 'PUT',
       body: JSON.stringify({ healthInterests, notificationsEnabled }),
     }, token);
-    setUser(updatedUser);
+    setUser(normalizeAuthUser(updatedUser));
   }, [token]);
 
   const changePassword = useCallback(async (currentPassword: string, newPassword: string) => {

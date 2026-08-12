@@ -49,7 +49,7 @@ export default function LoginScreen({ navigation }: Props) {
         <View style={styles.brand}>
           <View style={styles.logo}>
             <Image
-              source={require('../../../assets/BioinSight.png')}
+              source={require('../../../assets/BioinSight.jpeg')}
               style={styles.logoImage}
               resizeMode="contain"
             />
