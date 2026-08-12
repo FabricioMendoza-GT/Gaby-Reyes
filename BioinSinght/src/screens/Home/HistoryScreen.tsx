@@ -1,11 +1,23 @@
 import { useMemo, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import {
+  Alert,
+  Image,
+  Modal,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import type { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 
 import { useAuth } from '../../context/AuthContext';
 import { useClinicalTests } from '../../context/ClinicalTestsContext';
 import type { BottomTabParamList } from '../../navigation/types';
+import { API_URL } from '../../services/api';
+import { getStoredToken } from '../../services/sessionStorage';
 import type { HealthInterest } from '../../types/auth';
 import { formatTestDate, formatTestNumber, testStatusLabel } from '../../utils/clinicalTest';
 
@@ -39,11 +51,34 @@ export default function HistoryScreen({ navigation }: Props) {
   const { tests, loading, error, refresh } = useClinicalTests();
   const [filter, setFilter] = useState<Filter>('all');
   const [query, setQuery] = useState('');
+  const [previewVisible, setPreviewVisible] = useState(false);
+  const [previewTitle, setPreviewTitle] = useState('');
+  const [previewSource, setPreviewSource] = useState<{ uri: string; headers: { Authorization: string } } | null>(null);
   const categories: Filter[] = ['all', ...(user?.healthInterests ?? [])];
   const items = useMemo(() => tests.filter((item) => (
     (filter === 'all' || item.category === filter)
     && item.testName.toLowerCase().includes(query.trim().toLowerCase())
   )), [tests, filter, query]);
+
+  const isImageAttachment = (mimeType: string | null) => mimeType?.toLowerCase().startsWith('image/') ?? false;
+
+  const openImagePreview = async (testId: string, attachmentName: string | null) => {
+    const token = await getStoredToken();
+
+    if (!token) {
+      Alert.alert('Sesión expirada', 'Inicia sesión nuevamente para ver el adjunto.');
+      return;
+    }
+
+    setPreviewTitle(attachmentName ?? 'Adjunto');
+    setPreviewSource({
+      uri: `${API_URL}/tests/${testId}/attachment`,
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    setPreviewVisible(true);
+  };
 
   return (
     <SafeAreaView style={s.page} edges={['top', 'left', 'right']}>
@@ -66,6 +101,11 @@ export default function HistoryScreen({ navigation }: Props) {
               <Text style={s.name}>{item.testName}</Text>
               <Text style={s.date}>{formatTestDate(item.measuredAt)} · {categoryLabels[item.category]}</Text>
               {item.hasAttachment && <Text style={s.attachment}>Documento adjunto: {item.attachmentName}</Text>}
+              {item.hasAttachment && isImageAttachment(item.attachmentMimeType) && (
+                <Pressable style={s.previewButton} onPress={() => void openImagePreview(item.id, item.attachmentName)}>
+                  <Text style={s.previewButtonText}>Ver imagen</Text>
+                </Pressable>
+              )}
             </View>
             <View style={s.result}>
               <Text style={s.value}>{formatTestNumber(item.value)} {item.unit}</Text>
@@ -77,6 +117,36 @@ export default function HistoryScreen({ navigation }: Props) {
         {!!error && !tests.length && <Pressable onPress={() => void refresh()}><Text style={s.error}>{error} Toca para reintentar.</Text></Pressable>}
         {!loading && !error && items.length === 0 && <Text style={s.empty}>No hay resultados que coincidan con tus preferencias y búsqueda.</Text>}
       </ScrollView>
+
+      <Modal
+        visible={previewVisible}
+        animationType="fade"
+        transparent
+        onRequestClose={() => setPreviewVisible(false)}
+      >
+        <View style={s.modalOverlay}>
+          <View style={s.modalCard}>
+            <View style={s.modalHeader}>
+              <Text style={s.modalTitle} numberOfLines={1}>{previewTitle}</Text>
+              <Pressable onPress={() => setPreviewVisible(false)}>
+                <Text style={s.modalClose}>Cerrar</Text>
+              </Pressable>
+            </View>
+
+            {previewSource && (
+              <Image
+                source={previewSource}
+                style={s.previewImage}
+                resizeMode="contain"
+                onError={() => {
+                  Alert.alert('No se pudo abrir la imagen', 'Intenta nuevamente en unos segundos.');
+                  setPreviewVisible(false);
+                }}
+              />
+            )}
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -98,10 +168,18 @@ const s = StyleSheet.create({
   name: { fontSize: 15, fontWeight: '800', color: '#2A384C' },
   date: { marginTop: 5, color: '#8B97A9', fontSize: 12 },
   attachment: { marginTop: 6, color: '#2F6CF0', fontSize: 11, fontWeight: '700' },
+  previewButton: { marginTop: 8, alignSelf: 'flex-start', backgroundColor: '#EAF1FF', borderRadius: 10, paddingHorizontal: 10, paddingVertical: 5 },
+  previewButtonText: { color: '#2F6CF0', fontSize: 12, fontWeight: '800' },
   result: { alignItems: 'flex-end' },
   value: { fontSize: 16, fontWeight: '800', color: '#2A384C' },
   badge: { marginTop: 7, borderWidth: 1, borderRadius: 16, paddingHorizontal: 10, paddingVertical: 4 },
   badgeText: { fontWeight: '800', fontSize: 12 },
   empty: { textAlign: 'center', color: '#8B97A9', marginTop: 20, paddingHorizontal: 30, lineHeight: 20 },
   error: { textAlign: 'center', color: '#D14343', marginTop: 20, paddingHorizontal: 30, fontWeight: '700' },
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(21,31,49,0.7)', justifyContent: 'center', padding: 18 },
+  modalCard: { borderRadius: 16, backgroundColor: '#FFF', padding: 14, maxHeight: '80%' },
+  modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
+  modalTitle: { flex: 1, marginRight: 10, color: '#2A384C', fontWeight: '800', fontSize: 14 },
+  modalClose: { color: '#2F6CF0', fontWeight: '800' },
+  previewImage: { width: '100%', height: 420, backgroundColor: '#F5F7FB', borderRadius: 10 },
 });
