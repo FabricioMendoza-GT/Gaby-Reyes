@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import {
   Alert,
   Image,
+  ActivityIndicator,
   Modal,
   Pressable,
   ScrollView,
@@ -20,6 +21,7 @@ import { API_URL } from '../../services/api';
 import { getStoredToken } from '../../services/sessionStorage';
 import type { HealthInterest } from '../../types/auth';
 import { formatTestDate, formatTestNumber, testStatusLabel } from '../../utils/clinicalTest';
+import { fromByteArray } from 'base64-js';
 
 type Props = BottomTabScreenProps<BottomTabParamList, 'History'>;
 type Filter = 'all' | HealthInterest;
@@ -52,8 +54,9 @@ export default function HistoryScreen({ navigation }: Props) {
   const [filter, setFilter] = useState<Filter>('all');
   const [query, setQuery] = useState('');
   const [previewVisible, setPreviewVisible] = useState(false);
+  const [previewLoading, setPreviewLoading] = useState(false);
   const [previewTitle, setPreviewTitle] = useState('');
-  const [previewSource, setPreviewSource] = useState<{ uri: string; headers: { Authorization: string } } | null>(null);
+  const [previewSource, setPreviewSource] = useState<{ uri: string } | null>(null);
   const categories: Filter[] = ['all', ...(user?.healthInterests ?? [])];
   const items = useMemo(() => tests.filter((item) => (
     (filter === 'all' || item.category === filter)
@@ -71,13 +74,35 @@ export default function HistoryScreen({ navigation }: Props) {
     }
 
     setPreviewTitle(attachmentName ?? 'Adjunto');
-    setPreviewSource({
-      uri: `${API_URL}/tests/${testId}/attachment`,
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-    setPreviewVisible(true);
+    setPreviewLoading(true);
+
+    try {
+      const response = await fetch(`${API_URL}/tests/${testId}/attachment`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('No se pudo obtener el archivo adjunto.');
+      }
+
+      const mimeType = response.headers.get('content-type')?.toLowerCase() ?? 'image/jpeg';
+
+      if (!mimeType.startsWith('image/')) {
+        throw new Error('El adjunto no es una imagen válida.');
+      }
+
+      const buffer = await response.arrayBuffer();
+      const base64 = fromByteArray(new Uint8Array(buffer));
+
+      setPreviewSource({ uri: `data:${mimeType};base64,${base64}` });
+      setPreviewVisible(true);
+    } catch {
+      Alert.alert('No se pudo abrir la imagen', 'Intenta nuevamente en unos segundos.');
+    } finally {
+      setPreviewLoading(false);
+    }
   };
 
   return (
@@ -102,8 +127,12 @@ export default function HistoryScreen({ navigation }: Props) {
               <Text style={s.date}>{formatTestDate(item.measuredAt)} · {categoryLabels[item.category]}</Text>
               {item.hasAttachment && <Text style={s.attachment}>Documento adjunto: {item.attachmentName}</Text>}
               {item.hasAttachment && isImageAttachment(item.attachmentMimeType) && (
-                <Pressable style={s.previewButton} onPress={() => void openImagePreview(item.id, item.attachmentName)}>
-                  <Text style={s.previewButtonText}>Ver imagen</Text>
+                <Pressable
+                  style={[s.previewButton, previewLoading && s.previewButtonDisabled]}
+                  onPress={() => void openImagePreview(item.id, item.attachmentName)}
+                  disabled={previewLoading}
+                >
+                  <Text style={s.previewButtonText}>{previewLoading ? 'Cargando...' : 'Ver imagen'}</Text>
                 </Pressable>
               )}
             </View>
@@ -133,7 +162,14 @@ export default function HistoryScreen({ navigation }: Props) {
               </Pressable>
             </View>
 
-            {previewSource && (
+            {previewLoading && (
+              <View style={s.loaderBox}>
+                <ActivityIndicator size="large" color="#2F6CF0" />
+                <Text style={s.loaderText}>Cargando imagen...</Text>
+              </View>
+            )}
+
+            {!previewLoading && previewSource && (
               <Image
                 source={previewSource}
                 style={s.previewImage}
@@ -169,6 +205,7 @@ const s = StyleSheet.create({
   date: { marginTop: 5, color: '#8B97A9', fontSize: 12 },
   attachment: { marginTop: 6, color: '#2F6CF0', fontSize: 11, fontWeight: '700' },
   previewButton: { marginTop: 8, alignSelf: 'flex-start', backgroundColor: '#EAF1FF', borderRadius: 10, paddingHorizontal: 10, paddingVertical: 5 },
+  previewButtonDisabled: { opacity: 0.6 },
   previewButtonText: { color: '#2F6CF0', fontSize: 12, fontWeight: '800' },
   result: { alignItems: 'flex-end' },
   value: { fontSize: 16, fontWeight: '800', color: '#2A384C' },
@@ -181,5 +218,7 @@ const s = StyleSheet.create({
   modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
   modalTitle: { flex: 1, marginRight: 10, color: '#2A384C', fontWeight: '800', fontSize: 14 },
   modalClose: { color: '#2F6CF0', fontWeight: '800' },
+  loaderBox: { height: 180, alignItems: 'center', justifyContent: 'center', gap: 10 },
+  loaderText: { color: '#5C6D85', fontWeight: '600' },
   previewImage: { width: '100%', height: 420, backgroundColor: '#F5F7FB', borderRadius: 10 },
 });
